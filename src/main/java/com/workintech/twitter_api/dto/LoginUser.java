@@ -1,0 +1,9 @@
+package com.workintech.twitter_api.dto;
+
+import lombok.Data;
+
+@Data
+public class LoginUser {
+    private String email;
+    private String password;
+}

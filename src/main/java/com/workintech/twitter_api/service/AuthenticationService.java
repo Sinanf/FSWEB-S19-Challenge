@@ -36,4 +36,20 @@ public class AuthenticationService {
         // 4. Veritabanına yaz
         return userRepository.save(newUser);
     }
+
+    public ApplicationUser login(String email, String password) {
+        // 1. Email ile kullanıcıyı bul
+        ApplicationUser user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // 2. Şifreler uyuşuyor mu kontrol et
+        // passwordEncoder.matches(ham_sifre, veritabanindaki_sifreli_hal)
+        if (!passwordEncoder.matches(password, user.getPassword())) {
+            throw new RuntimeException("Invalid credentials");
+        }
+
+        // 3. Her şey doğruysa kullanıcıyı dön
+        return user;
+    }
+
 }

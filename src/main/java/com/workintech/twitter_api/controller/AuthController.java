@@ -1,5 +1,6 @@
 package com.workintech.twitter_api.controller;
 
+import com.workintech.twitter_api.dto.LoginUser;
 import com.workintech.twitter_api.dto.RegisterUser;
 import com.workintech.twitter_api.entity.ApplicationUser;
 import com.workintech.twitter_api.service.AuthenticationService;
@@ -26,6 +27,15 @@ public class AuthController {
                 registerUser.getUsername(),
                 registerUser.getEmail(),
                 registerUser.getPassword()
+        );
+    }
+
+    // POST http://localhost:3000/auth/login
+    @PostMapping("/login")
+    public ApplicationUser login(@RequestBody LoginUser loginUser) {
+        return authenticationService.login(
+                loginUser.getEmail(),
+                loginUser.getPassword()
         );
     }
 }
