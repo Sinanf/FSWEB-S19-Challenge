@@ -36,4 +36,19 @@ public class TweetController {
     public Tweet save(@RequestBody TweetRequest tweetRequest) {
         return tweetService.save(tweetRequest.getContent(), tweetRequest.getUserId());
     }
+
+
+    // Tweet Güncelleme: http://localhost:3000/tweet/1
+    @PutMapping("/{id}")
+    public Tweet update(@PathVariable Long id, @RequestBody TweetRequest tweetRequest) {
+        // Request'ten sadece content'i alıyoruz
+        return tweetService.update(id, tweetRequest.getContent());
+    }
+
+    // Tweet Silme: http://localhost:3000/tweet/1
+    @DeleteMapping("/{id}")
+    public String delete(@PathVariable Long id) {
+        tweetService.delete(id);
+        return "Tweet deleted successfully";
+    }
 }

@@ -45,4 +45,23 @@ public class TweetService {
         return tweetRepository.save(tweet);
 
     }
+
+    // Tweet Silme
+    public void delete(Long id) {
+        Tweet tweet = tweetRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Tweet not found!"));
+        tweetRepository.delete(tweet);
+    }
+
+    // Tweet Güncelleme
+    public Tweet update(Long id, String newContent) {
+        Tweet existingTweet = tweetRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Tweet not found!"));
+
+        existingTweet.setContent(newContent);
+        // updated_at gibi bir alanın varsa onu da güncelleyebilirsin
+
+        return tweetRepository.save(existingTweet);
+    }
+
 }
