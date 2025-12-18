@@ -1,5 +1,6 @@
 package com.workintech.twitter_api.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -27,5 +28,6 @@ public class ApplicationUser {
     private String password;
 
     @OneToMany(mappedBy = "user", cascade =  CascadeType.ALL)
+    @JsonIgnore
     private List<Tweet> tweets;
 }

@@ -21,7 +21,7 @@ public class SecurityConfig {
         return http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> {
-                    auth.requestMatchers("/auth/**").permitAll();
+                    auth.requestMatchers("/auth/**", "/tweet/**").permitAll();
                     auth.anyRequest().authenticated();
                 })
 
