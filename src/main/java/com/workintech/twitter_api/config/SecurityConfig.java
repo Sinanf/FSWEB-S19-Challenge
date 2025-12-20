@@ -19,13 +19,28 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
+                .csrf(csrf -> csrf.disable()) // CSRF korumasını kapat
+                .authorizeHttpRequests(auth -> {
+                    // Şimdilik ayrım yapmaksızın HERKESE (anyRequest) izin ver (permitAll)
+                    auth.anyRequest().permitAll();
+                })
+                // Basic Auth'u da şimdilik devreden çıkarabiliriz veya default bırakabiliriz
+                .httpBasic(Customizer.withDefaults())
+                .build();
+    }
+
+    /*
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        return http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> {
-                    auth.requestMatchers("/auth/**", "/tweet/**", "/comment/**").permitAll();
+                    auth.requestMatchers("/auth/**", "/tweet/**", "/comment/**", "/like/**", "/dislike/**").permitAll();
                     auth.anyRequest().authenticated();
                 })
 
                 .httpBasic(Customizer.withDefaults())
                 .build();
     }
+    */
 }
