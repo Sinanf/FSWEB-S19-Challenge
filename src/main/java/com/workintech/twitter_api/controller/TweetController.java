@@ -1,8 +1,10 @@
 package com.workintech.twitter_api.controller;
 
 import com.workintech.twitter_api.dto.TweetRequest;
+import com.workintech.twitter_api.dto.TweetResponse;
 import com.workintech.twitter_api.entity.Tweet;
 import com.workintech.twitter_api.service.TweetService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -10,6 +12,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/tweet")
+@CrossOrigin(origins = "*") // Frontend farklı portta olduğu için CORS izni veriyoruz
 public class TweetController {
 
     private final TweetService tweetService;
@@ -19,33 +22,55 @@ public class TweetController {
         this.tweetService = tweetService;
     }
 
-    // Tweetleri listele
+    // ========================================================================
+    // READ OPERATIONS (OKUMA İŞLEMLERİ)
+    // ========================================================================
+
+    /**
+     * Tüm tweetleri listeler (Zenginleştirilmiş DTO formatında).
+     * URL: GET http://localhost:8080/tweet
+     */
     @GetMapping
-    public List<Tweet> findAll() {
-        return tweetService.findAll();
+    public List<TweetResponse> findAll() {
+        return tweetService.findAllTweets();
     }
 
-    // Bir kullanıcının tweetlerini getir: http://localhost:3000/tweet/findByUserId/1
+    /**
+     * Belirli bir kullanıcının attığı tweetleri getirir.
+     * URL: GET http://localhost:8080/tweet/findByUserId/{id}
+     */
     @GetMapping("/findByUserId/{id}")
     public List<Tweet> findAllByUserId(@PathVariable long id) {
         return tweetService.findAllByUserId(id);
     }
 
-    // Tweet at: http://localhost:3000/tweet
+    // ========================================================================
+    // WRITE OPERATIONS (YAZMA İŞLEMLERİ)
+    // ========================================================================
+
+    /**
+     * Yeni bir tweet atar.
+     * URL: POST http://localhost:8080/tweet
+     */
     @PostMapping
-    public Tweet save(@RequestBody TweetRequest tweetRequest) {
+    public Tweet save(@Valid @RequestBody TweetRequest tweetRequest) {
         return tweetService.save(tweetRequest.getContent(), tweetRequest.getUserId());
     }
 
-
-    // Tweet Güncelleme: http://localhost:3000/tweet/1
+    /**
+     * Var olan bir tweeti günceller.
+     * URL: PUT http://localhost:8080/tweet/{id}
+     */
     @PutMapping("/{id}")
     public Tweet update(@PathVariable Long id, @RequestBody TweetRequest tweetRequest) {
-        // Request'ten sadece content'i alıyoruz
+        // Request'ten sadece content'i alıp güncelliyoruz
         return tweetService.update(id, tweetRequest.getContent());
     }
 
-    // Tweet Silme: http://localhost:3000/tweet/1
+    /**
+     * Bir tweeti siler.
+     * URL: DELETE http://localhost:8080/tweet/{id}
+     */
     @DeleteMapping("/{id}")
     public String delete(@PathVariable Long id) {
         tweetService.delete(id);

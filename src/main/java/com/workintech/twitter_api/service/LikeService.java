@@ -1,6 +1,5 @@
 package com.workintech.twitter_api.service;
 
-import com.workintech.twitter_api.dto.LikeRequest;
 import com.workintech.twitter_api.entity.ApplicationUser;
 import com.workintech.twitter_api.entity.Like;
 import com.workintech.twitter_api.entity.Tweet;
@@ -12,51 +11,53 @@ import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
+/**
+ * Tweet beğenme ve beğeniyi geri çekme işlemlerini yöneten servis.
+ */
 @Service
 public class LikeService {
 
     private final LikeRepository likeRepository;
-    private final ApplicationUserRepository userRepository;
     private final TweetRepository tweetRepository;
+    private final ApplicationUserRepository userRepository;
 
     @Autowired
-    public LikeService(LikeRepository likeRepository, ApplicationUserRepository userRepository, TweetRepository tweetRepository) {
+    public LikeService(LikeRepository likeRepository,
+                       TweetRepository tweetRepository,
+                       ApplicationUserRepository userRepository) {
         this.likeRepository = likeRepository;
-        this.userRepository = userRepository;
         this.tweetRepository = tweetRepository;
+        this.userRepository = userRepository;
     }
 
-    // BEĞENİ ATMA
-    public Like addLike(LikeRequest likeRequest) {
-        // 1. Kullanıcı ve Tweet var mı?
-        ApplicationUser user = userRepository.findById(likeRequest.getUserId())
-                .orElseThrow(() -> new RuntimeException("User not found!"));
+    /**
+     * Beğeni İşlemi (Toggle Mantığı):
+     */
+    public boolean toggleLike(Long userId, Long tweetId) {
 
-        Tweet tweet = tweetRepository.findById(likeRequest.getTweetId())
-                .orElseThrow(() -> new RuntimeException("Tweet not found!"));
-
-        // 2. Daha önce beğenmiş mi? (Repository'e yazdığımız özel metot burada işe yarıyor)
-        Optional<Like> existingLike = likeRepository.findByUserIdAndTweetId(likeRequest.getUserId(), likeRequest.getTweetId());
+        // 1. Veritabanında bu kullanıcının bu tweet için bir beğenisi var mı kontrol et
+        Optional<Like> existingLike = likeRepository.findByUserIdAndTweetId(userId, tweetId);
 
         if (existingLike.isPresent()) {
-            throw new RuntimeException("This tweet is already liked by user!");
+            // DURUM A: Beğeni mevcut -> Sil (Unlike)
+            likeRepository.delete(existingLike.get());
+            return false;
+        } else {
+            // DURUM B: Beğeni yok -> Yeni Beğeni Oluştur (Like)
+
+            // İlgili tweet ve kullanıcıyı doğrula
+            Tweet tweet = tweetRepository.findById(tweetId)
+                    .orElseThrow(() -> new RuntimeException("Tweet bulunamadı"));
+            ApplicationUser user = userRepository.findById(userId)
+                    .orElseThrow(() -> new RuntimeException("User bulunamadı"));
+
+            // İlişkileri kur ve kaydet
+            Like newLike = new Like();
+            newLike.setTweet(tweet);
+            newLike.setUser(user);
+            likeRepository.save(newLike);
+
+            return true;
         }
-
-        // 3. Beğeniyi kaydet
-        Like like = new Like();
-        like.setUser(user);
-        like.setTweet(tweet);
-
-        return likeRepository.save(like);
-    }
-
-    // BEĞENİ GERİ ALMA (DISLIKE)
-    public void removeLike(LikeRequest likeRequest) {
-        // Beğeniyi bul
-        Like existingLike = likeRepository.findByUserIdAndTweetId(likeRequest.getUserId(), likeRequest.getTweetId())
-                .orElseThrow(() -> new RuntimeException("Like not found to remove!"));
-
-        // Sil
-        likeRepository.delete(existingLike);
     }
 }
