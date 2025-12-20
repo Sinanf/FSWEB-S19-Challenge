@@ -41,4 +41,20 @@ public class CommentService {
         // 4. Kaydet
         return commentRepository.save(comment);
     }
+
+    // Yorum Silme
+    public void delete(Long id) {
+        Comment comment = commentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Comment not found!"));
+        commentRepository.delete(comment);
+    }
+
+    // Yorum Güncelleme
+    public Comment update(Long id, String newContent) {
+        Comment existingComment = commentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Comment not found!"));
+
+        existingComment.setContent(newContent);
+        return commentRepository.save(existingComment);
+    }
 }

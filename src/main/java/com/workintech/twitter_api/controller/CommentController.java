@@ -29,4 +29,19 @@ public class CommentController {
                 commentRequest.getTweetId()
         );
     }
+
+    // PUT http://localhost:3000/comment/1
+    @org.springframework.web.bind.annotation.PutMapping("/{id}")
+    public Comment update(@org.springframework.web.bind.annotation.PathVariable Long id,
+                          @RequestBody CommentRequest commentRequest) {
+        // Request'ten sadece content'i alıp güncelliyoruz
+        return commentService.update(id, commentRequest.getContent());
+    }
+
+    // DELETE http://localhost:3000/comment/1
+    @org.springframework.web.bind.annotation.DeleteMapping("/{id}")
+    public String delete(@org.springframework.web.bind.annotation.PathVariable Long id) {
+        commentService.delete(id);
+        return "Comment deleted successfully";
+    }
 }
