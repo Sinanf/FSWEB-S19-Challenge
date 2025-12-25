@@ -12,7 +12,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/tweet")
-@CrossOrigin(origins = "*") // Frontend farklı portta olduğu için CORS izni veriyoruz
+@CrossOrigin(origins = "*") // React (farklı port) erişimi için şart.
 public class TweetController {
 
     private final TweetService tweetService;
@@ -22,56 +22,38 @@ public class TweetController {
         this.tweetService = tweetService;
     }
 
-    // ========================================================================
-    // READ OPERATIONS (OKUMA İŞLEMLERİ)
-    // ========================================================================
+    // --- OKUMA İŞLEMLERİ (READ) ---
 
-    /**
-     * Tüm tweetleri listeler (Zenginleştirilmiş DTO formatında).
-     * URL: GET http://localhost:8080/tweet
-     */
     @GetMapping
     public List<TweetResponse> findAll() {
+        // Anasayfa akışı. Entity değil DTO dönüyoruz (Şifreler gizlensin diye).
         return tweetService.findAllTweets();
     }
 
-
     @GetMapping("/findByUserId/{id}")
     public List<TweetResponse> findAllByUserId(@PathVariable long id) {
-        // Yeni yazdığımız service metodunu çağırıyoruz
+        // Profil sayfası: Sadece o kullanıcının tweetlerini getir.
         return tweetService.findAllTweetsByUserId(id);
     }
 
-    // ========================================================================
-    // WRITE OPERATIONS (YAZMA İŞLEMLERİ)
-    // ========================================================================
+    // --- YAZMA İŞLEMLERİ (WRITE) ---
 
-    /**
-     * Yeni bir tweet atar.
-     * URL: POST http://localhost:8080/tweet
-     */
     @PostMapping
     public Tweet save(@Valid @RequestBody TweetRequest tweetRequest) {
+        // Tweet atma. @Valid: İçerik boş mu diye kontrol eder.
         return tweetService.save(tweetRequest.getContent(), tweetRequest.getUserId());
     }
 
-    /**
-     * Var olan bir tweeti günceller.
-     * URL: PUT http://localhost:8080/tweet/{id}
-     */
     @PutMapping("/{id}")
     public Tweet update(@PathVariable Long id, @RequestBody TweetRequest tweetRequest) {
-        // Request'ten sadece content'i alıp güncelliyoruz
+        // Güncelleme: Sadece metni (content) değiştiriyoruz.
         return tweetService.update(id, tweetRequest.getContent());
     }
 
-    /**
-     * Bir tweeti siler.
-     * URL: DELETE http://localhost:8080/tweet/{id}
-     */
     @DeleteMapping("/{id}")
     public String delete(@PathVariable Long id) {
+        // Silme işlemi.
         tweetService.delete(id);
-        return "Tweet deleted successfully";
+        return "Tweet silindi.";
     }
 }

@@ -23,11 +23,13 @@ import java.util.List;
 @Configuration
 public class SecurityConfig {
 
+    // Şifreleri veritabanında düz metin (plain text) saklamamak için BCrypt ile şifreliyoruz.
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
+    // Kullanıcı doğrulama yöneticisi. DB'deki kullanıcı ile girilen şifreyi kıyaslar.
     @Bean
     public AuthenticationManager authManager(UserDetailsService userDetailsService) {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
@@ -36,25 +38,30 @@ public class SecurityConfig {
         return new ProviderManager(provider);
     }
 
+    // Ana güvenlik filtresi
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
-                .csrf(AbstractHttpConfigurer::disable)
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .csrf(AbstractHttpConfigurer::disable) // REST API olduğu için CSRF korumasına gerek yok.
+                .cors(cors -> cors.configurationSource(corsConfigurationSource())) // React ile iletişim için CORS ayarını bağladık.
                 .authorizeHttpRequests(auth -> {
+                    // Tarayıcı ön uçuş (Pre-flight) isteklerine izin ver.
                     auth.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll();
+                    // Login ve Register endpointleri herkese açık olmalı.
                     auth.requestMatchers("/auth/**").permitAll();
+                    // Diğer tüm istekler için giriş yapılmış olması şart.
                     auth.anyRequest().authenticated();
                 })
-                .httpBasic(Customizer.withDefaults())
+                .httpBasic(Customizer.withDefaults()) // Basic Auth kullanıyoruz.
                 .build();
     }
 
+    // CORS Ayarları: Frontend (React) farklı portta olduğu için izin vermemiz şart.
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration cfg = new CorsConfiguration();
-        cfg.setAllowedOriginPatterns(List.of("*"));
-        cfg.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        cfg.setAllowedOriginPatterns(List.of("*")); // Her yerden gelen isteği kabul et (Localhost vs.)
+        cfg.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS")); // İzin verilen HTTP metodları
         cfg.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
         cfg.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

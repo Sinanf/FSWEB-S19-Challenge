@@ -11,9 +11,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
-/**
- * Tweet beğenme ve beğeniyi geri çekme işlemlerini yöneten servis.
- */
 @Service
 public class LikeService {
 
@@ -31,27 +28,28 @@ public class LikeService {
     }
 
     /**
-     * Beğeni İşlemi (Toggle Mantığı):
+     * toggleLike Metodu:
+     * Twitter'daki gibi "kalbe basınca beğenme, tekrar basınca geri çekme" mantığıdır.
      */
     public boolean toggleLike(Long userId, Long tweetId) {
 
-        // 1. Veritabanında bu kullanıcının bu tweet için bir beğenisi var mı kontrol et
+        // Veritabanını sorgula: "Bu kullanıcı bu tweeti daha önce beğenmiş mi?"
         Optional<Like> existingLike = likeRepository.findByUserIdAndTweetId(userId, tweetId);
 
         if (existingLike.isPresent()) {
-            // DURUM A: Beğeni mevcut -> Sil (Unlike)
+
+            // DURUM A: Beğeni zaten var. O halde beğeniyi kaldırıyoruz (Unlike).
             likeRepository.delete(existingLike.get());
             return false;
-        } else {
-            // DURUM B: Beğeni yok -> Yeni Beğeni Oluştur (Like)
 
-            // İlgili tweet ve kullanıcıyı doğrula
+        } else {
+
+            // DURUM B: Beğeni yok. O halde yeni bir Like kaydı oluşturuyoruz.
             Tweet tweet = tweetRepository.findById(tweetId)
                     .orElseThrow(() -> new RuntimeException("Tweet bulunamadı"));
             User user = userRepository.findById(userId)
-                    .orElseThrow(() -> new RuntimeException("User bulunamadı"));
+                    .orElseThrow(() -> new RuntimeException("Kullanıcı bulunamadı"));
 
-            // İlişkileri kur ve kaydet
             Like newLike = new Like();
             newLike.setTweet(tweet);
             newLike.setUser(user);

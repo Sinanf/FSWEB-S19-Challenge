@@ -2,28 +2,24 @@ package com.workintech.twitter_api.repository;
 
 import com.workintech.twitter_api.entity.Tweet;
 import org.springframework.data.jpa.repository.JpaRepository;
-
 import java.util.List;
 
 /**
- * Tweet entity'si için veritabanı erişim katmanı.
- * Tweetlerin listelenmesi, filtrelenmesi ve sıralanması işlemlerini yönetir.
+ * Tweetler için veritabanı yönetim merkezi.
+ * Metod isimleri üzerinden otomatik SQL sorguları üretir.
  */
 public interface TweetRepository extends JpaRepository<Tweet, Long> {
 
-    /**
-     * Kullanım: Profil sayfasında sadece o kişinin tweetlerini listelemek için.
-     */
+    // Profil Sayfası: Belirli bir kullanıcının tweetlerini getirir.
     List<Tweet> findAllByUserId(Long userId);
 
-    /**
-     * Kullanım: Ana sayfa akışında (Feed) en güncel tweetin en üstte görünmesi için.
-     */
+    // Anasayfa Akışı: Tüm tweetleri YENİDEN ESKİYE doğru sıralar.
+    // SELECT * FROM tweet ORDER BY created_at DESC
     List<Tweet> findAllByOrderByCreatedAtDesc();
 
+    // Kullanıcı Akışı: Sadece o kişinin tweetlerini tarihe göre sıralı getirir.
     List<Tweet> findAllByUserIdOrderByCreatedAtDesc(Long userId);
 
+    // Retweet Sayacı: Bu tweetin kaç kez retweetlendiğini hesaplar.
     int countByRetweetOfId(Long tweetId);
-
-
 }

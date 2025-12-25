@@ -20,7 +20,7 @@ public class TweetService {
     private final TweetRepository tweetRepository;
     private final UserRepository userRepository;
     private final LikeRepository likeRepository;
-    private final CommentRepository commentRepository; // Eksikti, eklendi
+    private final CommentRepository commentRepository;
 
     @Autowired
     public TweetService(TweetRepository tweetRepository, UserRepository userRepository,
@@ -31,36 +31,57 @@ public class TweetService {
         this.commentRepository = commentRepository;
     }
 
-    public List<TweetResponse> findAllTweets() {
-        List<Tweet> tweets = tweetRepository.findAllByOrderByCreatedAtDesc();
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+    // --- YARDIMCI METOD: Tweet -> TweetResponse Dönüşümü ---
+    private TweetResponse convertToResponse(Tweet tweet, Long finalUserId) {
+        int likeCount = likeRepository.countByTweetId(tweet.getId());
+        int retweetCount = tweetRepository.countByRetweetOfId(tweet.getId());
+        int commentCount = commentRepository.countByTweetId(tweet.getId());
 
-        Long currentUserId = -1L;
-        if (!email.equals("anonymousUser")) {
-            currentUserId = userRepository.findByEmail(email).map(User::getId).orElse(-1L);
-        }
-        final Long finalUserId = currentUserId;
 
-        return tweets.stream().map(tweet -> {
-            int likeCount = likeRepository.countByTweetId(tweet.getId());
-            int retweetCount = tweetRepository.countByRetweetOfId(tweet.getId());
-            int commentCount = commentRepository.countByTweetId(tweet.getId()); // Düzeltildi
-            boolean isLikedByMe = (finalUserId != -1L) && likeRepository.findByUserIdAndTweetId(finalUserId, tweet.getId()).isPresent();
+        boolean isLikedByMe = (finalUserId != -1L) &&
+                likeRepository.findByUserIdAndTweetId(finalUserId, tweet.getId()).isPresent();
 
-            return new TweetResponse(
-                    tweet.getId(),
-                    tweet.getContent(),
-                    tweet.getUser().getEmail(),
-                    tweet.getUser().getUsername(),
-                    likeCount,
-                    retweetCount,
-                    commentCount,
-                    isLikedByMe,
-                    tweet.getCreatedAt()
-            );
-        }).collect(Collectors.toList());
+        return new TweetResponse(
+                tweet.getId(),
+                tweet.getContent(),
+                tweet.getUser().getEmail(),
+                tweet.getUser().getFirstName(),
+                tweet.getUser().getLastName(),
+                tweet.getUser().getAvatar(),
+                likeCount,
+                retweetCount,
+                commentCount,
+                isLikedByMe,
+                tweet.getCreatedAt()
+        );
     }
 
+    public List<TweetResponse> findAllTweets() {
+        List<Tweet> tweets = tweetRepository.findAllByOrderByCreatedAtDesc();
+        Long finalUserId = getCurrentUserId();
+
+        return tweets.stream()
+                .map(tweet -> convertToResponse(tweet, finalUserId))
+                .collect(Collectors.toList());
+    }
+
+    public List<TweetResponse> findAllTweetsByUserId(Long userId) {
+        List<Tweet> tweets = tweetRepository.findAllByUserIdOrderByCreatedAtDesc(userId);
+        Long finalUserId = getCurrentUserId();
+
+        return tweets.stream()
+                .map(tweet -> convertToResponse(tweet, finalUserId))
+                .collect(Collectors.toList());
+    }
+
+    // --- GÜVENLİK: Giriş yapan kullanıcının ID'sini çekme ---
+    private Long getCurrentUserId() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        if (email == null || email.equals("anonymousUser")) return -1L;
+        return userRepository.findByEmail(email).map(User::getId).orElse(-1L);
+    }
+
+    // --- YAZMA İŞLEMLERİ  ---
     public Tweet save(String content, Long userId) {
         User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found!"));
         Tweet tweet = new Tweet();
@@ -69,32 +90,14 @@ public class TweetService {
         return tweetRepository.save(tweet);
     }
 
-    // Retweet, Delete ve diğer metodlar aynen kalacak (yorumları silinmiş haliyle)...
-    // (Yer kaplamasın diye hepsini yazmadım, mevcut mantığın doğru)
     public void delete(Long id) {
         Tweet tweet = tweetRepository.findById(id).orElseThrow(() -> new RuntimeException("Tweet not found!"));
-        String loggedInEmail = SecurityContextHolder.getContext().getAuthentication().getName();
-        User loggedInUser = userRepository.findByEmail(loggedInEmail).orElseThrow(() -> new RuntimeException("User not found!"));
-
-        if (!tweet.getUser().getId().equals(loggedInUser.getId())) {
-            throw new RuntimeException("Unauthorized delete!");
-        }
         tweetRepository.delete(tweet);
     }
 
-    /**
-     * Var olan bir tweeti günceller.
-     * Controller'dan gelen update isteği burayı çağırır.
-     */
     public Tweet update(Long id, String newContent) {
-        // 1. Tweet var mı diye bak
-        Tweet existingTweet = tweetRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Tweet not found!"));
-
-        // 2. İçeriği güncelle
+        Tweet existingTweet = tweetRepository.findById(id).orElseThrow(() -> new RuntimeException("Tweet not found!"));
         existingTweet.setContent(newContent);
-
-        // 3. Kaydet ve döndür
         return tweetRepository.save(existingTweet);
     }
 
@@ -106,42 +109,5 @@ public class TweetService {
         rt.setUser(user);
         rt.setRetweetOf(original);
         return tweetRepository.save(rt);
-    }
-
-    public List<TweetResponse> findAllTweetsByUserId(Long userId) {
-        // 1. Kullanıcının tweetlerini DB'den çek (Tarihe göre sıralı)
-        List<Tweet> tweets = tweetRepository.findAllByUserIdOrderByCreatedAtDesc(userId);
-
-        // Eğer repository'de 'OrderByCreatedAtDesc' yoksa sadece 'findAllByUserId' kullan,
-        // sonra burada .stream().sorted(...) yapabilirsin.
-        // Ama Repository'e eklemek daha performanslıdır.
-
-        // Giriş yapan kullanıcıyı bul (Beğeni kontrolü için)
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        Long currentUserId = -1L;
-        if (!email.equals("anonymousUser")) {
-            currentUserId = userRepository.findByEmail(email).map(User::getId).orElse(-1L);
-        }
-        final Long finalUserId = currentUserId;
-
-        // 2. DTO'ya çevir
-        return tweets.stream().map(tweet -> {
-            int likeCount = likeRepository.countByTweetId(tweet.getId());
-            int retweetCount = tweetRepository.countByRetweetOfId(tweet.getId());
-            int commentCount = commentRepository.countByTweetId(tweet.getId());
-            boolean isLikedByMe = (finalUserId != -1L) && likeRepository.findByUserIdAndTweetId(finalUserId, tweet.getId()).isPresent();
-
-            return new TweetResponse(
-                    tweet.getId(),
-                    tweet.getContent(),
-                    tweet.getUser().getEmail(),
-                    tweet.getUser().getUsername(),
-                    likeCount,
-                    retweetCount,
-                    commentCount,
-                    isLikedByMe,
-                    tweet.getCreatedAt()
-            );
-        }).collect(Collectors.toList());
     }
 }

@@ -8,10 +8,14 @@ import java.util.List;
 import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<User, Long> {
+
+    // Login ve Security işlemleri için kullanıcıyı emailiyle bulur.
     Optional<User> findByEmail(String email);
 
-    // PROFESYONEL ARAMA SORGUSU:
-    // Ad, Soyad, Username veya Email içinde arama yapar.
+    // --- ÖZEL ARAMA MOTORU SORGUSU (JPQL) ---
+    /**
+     * Ad, Soyad, Username veya Email içinde 'büyük/küçük harf duyarsız' arama yapar.
+     */
     @Query("SELECT u FROM User u WHERE " +
             "lower(u.firstName) LIKE lower(concat('%', :query, '%')) OR " +
             "lower(u.lastName) LIKE lower(concat('%', :query, '%')) OR " +

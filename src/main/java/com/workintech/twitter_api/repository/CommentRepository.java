@@ -6,14 +6,16 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 /**
- * Yorum (Comment) entity'si için veritabanı erişim katmanı.
- * JpaRepository sayesinde temel CRUD (Ekle, Sil, Güncelle, Listele) işlemleri otomatik olarak gelir.
+ * Repository: Veritabanı ile konuşan katman.
+ * JpaRepository: Hazır "Save", "Delete", "FindById" metodlarını sağlar.
  */
 public interface CommentRepository extends JpaRepository<Comment, Long> {
 
+    // Derived Query: Metod isminden otomatik SQL üretir.
+    // SELECT COUNT(*) FROM comment WHERE tweet_id = ?
     int countByTweetId(Long tweetId);
 
-    // Tweet ID'sine göre yorumları getirir
+    // SELECT * FROM comment WHERE tweet_id = ?
     List<Comment> findByTweetId(Long tweetId);
 
 }

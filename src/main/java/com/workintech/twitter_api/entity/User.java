@@ -18,6 +18,7 @@ import java.util.List;
 @NoArgsConstructor
 @Entity
 @Table(name = "app_user", schema = "public")
+// UserDetails: Spring Security'nin bu sınıfı 'Kullanıcı' olarak tanımasını sağlar.
 public class User implements UserDetails {
 
     @Id
@@ -36,7 +37,7 @@ public class User implements UserDetails {
     @Column(name = "username", nullable = false)
     private String username;
 
-    @Column(name = "password", nullable = false)
+    @Column(name = "password", nullable = false) // BCrypt ile hashlenmiş olarak saklanır.
     private String password;
 
     @Column(name = "avatar_url")
@@ -45,6 +46,11 @@ public class User implements UserDetails {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
+    // --- İLİŞKİLER ---
+
+    // Bir kullanıcının birden fazla tweeti olabilir.
+    // @JsonIgnore: API'den kullanıcıyı çekerken tweet listesinin otomatik gelip
+    // sonsuz döngü yaratmasını engeller.
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     @JsonIgnore
     private List<Tweet> tweets;
@@ -54,20 +60,23 @@ public class User implements UserDetails {
         this.createdAt = LocalDateTime.now();
     }
 
-    @Override
-    public String getUsername() { return email; }
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() { return Collections.emptyList(); }
-    @Override
-    public boolean isAccountNonExpired() { return true; }
-    @Override
-    public boolean isAccountNonLocked() { return true; }
-    @Override
-    public boolean isCredentialsNonExpired() { return true; }
-    @Override
-    public boolean isEnabled() { return true; }
+    // --- SPRING SECURITY METODLARI ---
 
-    public String getFullName() {
-        return firstName + " " + lastName;
+    @Override
+    public String getUsername() {
+        // Twitter klonumuzda giriş anahtarı olarak EMAIL kullanıyoruz.
+        return email;
     }
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        // Şimdilik rol yönetimi (Admin/User) yok, boş liste dönüyoruz.
+        return Collections.emptyList();
+    }
+
+    // Hesabın aktiflik durumlarını kontrol eden metodlar (Hepsine TRUE verdik).
+    @Override public boolean isAccountNonExpired() { return true; }
+    @Override public boolean isAccountNonLocked() { return true; }
+    @Override public boolean isCredentialsNonExpired() { return true; }
+    @Override public boolean isEnabled() { return true; }
 }

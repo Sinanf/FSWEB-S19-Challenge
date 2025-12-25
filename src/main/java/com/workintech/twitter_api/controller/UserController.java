@@ -8,7 +8,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/user")
-@CrossOrigin(origins = "*") // Frontend'den erişim izni
+@CrossOrigin(origins = "*")
 public class UserController {
 
     private final UserRepository userRepository;
@@ -17,17 +17,23 @@ public class UserController {
         this.userRepository = userRepository;
     }
 
-    // Arama Endpoint'i
+    // --- KULLANICI ARAMA (SEARCH) ---
+
+    /**
+     * URL: GET http://localhost:8080/user/search?query=ahmet
+     */
     @GetMapping("/search")
     public List<UserResponse> search(@RequestParam String query) {
+        // Stream API: Veritabanından gelen User listesini dönüştürüyoruz.
+        // Amaç: Şifre gibi gizli verileri Client'a yollamamak (DTO Dönüşümü).
         return userRepository.searchUsers(query).stream()
                 .map(u -> new UserResponse(
                         u.getId(),
                         u.getUsername(),
                         u.getEmail(),
-                        u.getFirstName(), // YENİ
-                        u.getLastName(),  // YENİ
-                        u.getAvatar()     // YENİ
+                        u.getFirstName(),
+                        u.getLastName(),
+                        u.getAvatar()
                 ))
                 .toList();
     }

@@ -1,50 +1,45 @@
 package com.workintech.twitter_api.controller;
 
 import com.workintech.twitter_api.entity.Tweet;
+import com.workintech.twitter_api.entity.User;
 import com.workintech.twitter_api.repository.UserRepository;
 import com.workintech.twitter_api.service.TweetService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/retweet")
+@CrossOrigin(origins = "*") // Frontend (React) erişimi için şart
 public class RetweetController {
 
     private final TweetService tweetService;
     private final UserRepository userRepository;
 
-    @Autowired
     public RetweetController(TweetService tweetService, UserRepository userRepository) {
         this.tweetService = tweetService;
         this.userRepository = userRepository;
     }
 
-    // ========================================================================
-    // RETWEET OPERATIONS (RETWEET ETME / GERİ ALMA)
-    // ========================================================================
-
-    /**
-     * Bir tweeti Retweet yapar.
+    /**.
      * URL: POST http://localhost:8080/retweet/{originalTweetId}
      */
     @PostMapping("/{originalTweetId}")
     public Tweet retweet(@PathVariable Long originalTweetId, Authentication authentication) {
-        // 1. Giriş yapan kullanıcıyı SecurityContext (Authentication) üzerinden bul
-        Long userId = userRepository.findByEmail(authentication.getName()).get().getId();
+        // 1. O anki oturum açmış kullanıcıyı bul (Güvenlik)
+        String email = authentication.getName();
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Kullanıcı bulunamadı!"));
 
-        // 2. Service katmanındaki retweet metodunu çağır
-        return tweetService.retweet(userId, originalTweetId);
+        // 2. Service katmanına "Bu kullanıcı, şu tweeti retweetledi" de.
+        return tweetService.retweet(user.getId(), originalTweetId);
     }
 
     /**
-     * Yapılan bir Retweet'i siler
-     * Retweet teknik olarak bir Tweet olduğu için standart silme işlemi uygulanır.
+     * Retweeti siler
      * URL: DELETE http://localhost:8080/retweet/{id}
      */
     @DeleteMapping("/{id}")
-    public String deleteRetweet(@PathVariable Long id) {
+    public void deleteRetweet(@PathVariable Long id) {
         tweetService.delete(id);
-        return "Retweet deleted successfully";
     }
 }

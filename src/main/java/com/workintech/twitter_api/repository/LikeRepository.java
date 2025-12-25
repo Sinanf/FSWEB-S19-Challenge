@@ -5,17 +5,16 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 
 /**
- * Beğeni (Like) entity'si için veritabanı erişim katmanı.
- * Kullanıcıların beğenilerini sorgulamak ve saymak için kullanılır.
+ * Beğeni işlemleri için veritabanı kapısı.
  */
 public interface LikeRepository extends JpaRepository<Like, Long> {
 
-
+    // Bir kullanıcı bu tweeti daha önce beğenmiş mi?
+    // Varsa Like objesi döner, yoksa boş (Optional) döner.
     Optional<Like> findByUserIdAndTweetId(Long userId, Long tweetId);
 
-    /**
-     * Tweet listelenirken "Like Count" bilgisini hesaplamak için kullanılır.
-     */
+    // Tweet bazlı toplam beğeni sayısını hesaplar.
+    // SELECT COUNT(*) FROM likes WHERE tweet_id = ?
     int countByTweetId(Long tweetId);
 
 }

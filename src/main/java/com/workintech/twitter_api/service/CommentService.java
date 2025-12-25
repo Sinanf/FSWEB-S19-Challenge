@@ -29,59 +29,60 @@ public class CommentService {
         this.userRepository = userRepository;
     }
 
+    // --- YORUM KAYDETME ---
     public Comment save(String content, Long userId, Long tweetId) {
+        // İlgili kullanıcıyı ve tweeti bul, yoksa hata fırlat.
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+                .orElseThrow(() -> new RuntimeException("Kullanıcı bulunamadı: " + userId));
 
         Tweet tweet = tweetRepository.findById(tweetId)
-                .orElseThrow(() -> new RuntimeException("Tweet not found with id: " + tweetId));
+                .orElseThrow(() -> new RuntimeException("Tweet bulunamadı: " + tweetId));
 
         Comment comment = new Comment();
         comment.setContent(content);
-        comment.setUser(user);
-        comment.setTweet(tweet);
+        comment.setUser(user);   // Yorum ile Kullanıcıyı bağlıyoruz.
+        comment.setTweet(tweet); // Yorum ile Tweeti bağlıyoruz.
 
-        // createdAt @PrePersist ile otomatik atanacak.
         return commentRepository.save(comment);
     }
 
-    // --- GÜNCELLEME ve SİLME metodların aynen kalabilir ---
+    // --- YORUM SİLME (GÜVENLİ) ---
+    public void delete(Long id) {
+        Comment comment = commentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Yorum bulunamadı!"));
+
+        // 1. Giriş yapmış olan kullanıcının emailini SecurityContext'ten alıyoruz.
+        String loggedInEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+        User loggedInUser = userRepository.findByEmail(loggedInEmail)
+                .orElseThrow(() -> new RuntimeException("Kullanıcı bulunamadı!"));
+
+        // 2. YETKİ KONTROLÜ: Yorumun sahibi ile giriş yapan kişi aynı mı?
+        if (!comment.getUser().getId().equals(loggedInUser.getId())) {
+            throw new RuntimeException("Bu yorumu silmeye yetkiniz yok!");
+        }
+        commentRepository.delete(comment);
+    }
+
+    // --- TWEETE ÖZEL YORUMLARI LİSTELEME ---
+    public List<CommentResponse> findCommentsByTweetId(Long tweetId) {
+        List<Comment> comments = commentRepository.findByTweetId(tweetId);
+
+        // Entity listesini, frontend'in beklediği Response DTO listesine çeviriyoruz.
+        return comments.stream()
+                .map(comment -> new CommentResponse(
+                        comment.getId(),
+                        comment.getContent(),
+                        comment.getUser().getUsername(),
+                        comment.getUser().getEmail(),
+                        comment.getCreatedAt()
+                ))
+                .toList();
+    }
+
     public Comment update(Long id, String newContent) {
         Comment existingComment = commentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Comment not found!"));
         existingComment.setContent(newContent);
         return commentRepository.save(existingComment);
-    }
-
-    public void delete(Long id) {
-        Comment comment = commentRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Comment not found!"));
-
-        String loggedInEmail = SecurityContextHolder.getContext().getAuthentication().getName();
-        User loggedInUser = userRepository.findByEmail(loggedInEmail)
-                .orElseThrow(() -> new RuntimeException("User not found!"));
-
-        if (!comment.getUser().getId().equals(loggedInUser.getId())) {
-            throw new RuntimeException("You are not authorized to delete this comment!");
-        }
-        commentRepository.delete(comment);
-    }
-
-
-    public List<CommentResponse> findCommentsByTweetId(Long tweetId) {
-        List<Comment> comments = commentRepository.findByTweetId(tweetId);
-
-        return comments.stream()
-                .map(comment -> new CommentResponse(
-                        comment.getId(),
-                        comment.getContent(),
-                        // DÜZELTME 1: User entity'sinde firstName yok, o yüzden 'username'i gönderiyoruz.
-                        // Frontend'de "userFirstName" olarak karşılanacak.
-                        comment.getUser().getUsername(),
-                        comment.getUser().getEmail(),
-                        // DÜZELTME 2: Artık yorumun kendi tarihini gönderiyoruz.
-                        comment.getCreatedAt()
-                ))
-                .toList();
     }
 }
