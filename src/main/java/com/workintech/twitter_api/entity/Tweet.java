@@ -1,18 +1,17 @@
 package com.workintech.twitter_api.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.CreationTimestamp;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
-/**
- * Veritabanındaki "tweet" tablosunu temsil eder.
- * Uygulamanın en temel içerik birimidir.
- */
+@Getter
+@Setter
 @NoArgsConstructor
-@Data
 @Entity
 @Table(name = "tweet", schema = "public")
 public class Tweet {
@@ -22,49 +21,50 @@ public class Tweet {
     @Column(name = "id")
     private Long id;
 
-    // ========================================================================
-    // TEMEL ALANLAR (CONTENT & METADATA)
-    // ========================================================================
-
-    /**
-     * Tweetin metin içeriği.
-     * Twitter standardı gereği maksimum 280 karakter olabilir.
-     */
-    @Column(name = "content", length = 280, nullable = false)
+    @Column(name = "content")
     private String content;
 
-    /**
-     * Tweetin atıldığı tarih ve saat.
-     * @CreationTimestamp sayesinde biz kodda elle set etmeyiz,
-     * veritabanına kayıt anında sistem saatini otomatik alır.
-     */
-    @CreationTimestamp
+    // --- SAYAÇLAR (Frontend'de göstermek için) ---
+    @Column(name = "like_count")
+    private int likeCount = 0;
+
+    @Column(name = "retweet_count")
+    private int retweetCount = 0;
+
+    @Column(name = "comment_count")
+    private int commentCount = 0;
+
+    // --- TARİH AYARI (Sorunu çözecek kısım) ---
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
-    // ========================================================================
-    // RELATIONSHIPS (İLİŞKİLER)
-    // ========================================================================
+    // --- İLİŞKİLER ---
 
-    /**
-     * İlişki: Bir Kullanıcı -> Çok Tweet (ManyToOne)
-     *
-     * ÖNEMLİ: Cascade tipleri arasında "REMOVE" YOKTUR.
-     * Çünkü bir tweet silinirse, o tweeti atan kullanıcı SİLİNMEMELİDİR.
-     */
+    // DİKKAT: Artık ApplicationUser değil, User sınıfına bağlıyoruz.
     @ManyToOne(cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
     @JoinColumn(name = "user_id", nullable = false)
-    private ApplicationUser user;
+    private User user;
 
-    /**
-     * RETWEET İLİŞKİSİ (Self-Referencing / Kendi Kendine Referans)
-     *
-     * Bir tweet, başka bir tweetin kopyası olabilir.
-     * - Eğer bu alan null ise: Normal bir tweettir.
-     * - Eğer bu alan dolu ise: Bu bir Retweettir ve `retweetOf` orijinal tweeti gösterir.
-     */
+    // Bir tweetin altındaki yorumlar (Silinirse yorumlar da gider)
+    @OneToMany(mappedBy = "tweet", cascade = CascadeType.ALL)
+    private List<Comment> comments = new ArrayList<>();
+
+    // Bir tweet başka bir tweetin retweet'i olabilir
     @ManyToOne
-    @JoinColumn(name = "retweet_id") // Veritabanında "retweet_id" sütunu oluşur
+    @JoinColumn(name = "retweet_of_id")
     private Tweet retweetOf;
 
+    // --- LIKES İLİŞKİSİ (Hangi kullanıcılar beğendi) ---
+    // Eğer Like tablosunu ayrı tutuyorsan burası değişebilir ama
+    // genelde ManyToMany veya ayrı bir entity ile yapılır.
+    // Şimdilik basitlik adına likeCount üzerinden gidiyoruz.
+    // Eğer "Like" entity'si kullanıyorsan onu buraya List<Like> olarak eklemelisin.
+
+    // --- OTOMATİK TARİH ATAMA ---
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = LocalDateTime.now();
+        // Null check yapalım ki sayaçlar null gelmesin
+        if (this.likeCount < 0) this.likeCount = 0;
+    }
 }

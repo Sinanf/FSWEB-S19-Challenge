@@ -1,7 +1,7 @@
 package com.workintech.twitter_api.controller;
 
-import com.workintech.twitter_api.entity.ApplicationUser;
-import com.workintech.twitter_api.repository.ApplicationUserRepository;
+import com.workintech.twitter_api.entity.User;
+import com.workintech.twitter_api.repository.UserRepository;
 import com.workintech.twitter_api.service.LikeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -12,10 +12,10 @@ import org.springframework.web.bind.annotation.*;
 public class LikeController {
 
     private final LikeService likeService;
-    private final ApplicationUserRepository userRepository;
+    private final UserRepository userRepository;
 
     @Autowired
-    public LikeController(LikeService likeService, ApplicationUserRepository userRepository) {
+    public LikeController(LikeService likeService, UserRepository userRepository) {
         this.likeService = likeService;
         this.userRepository = userRepository;
     }
@@ -34,7 +34,7 @@ public class LikeController {
         String loggedInEmail = SecurityContextHolder.getContext().getAuthentication().getName();
 
         // 2. Emailden kullanıcıyı bul (Yoksa hata fırlat)
-        ApplicationUser user = userRepository.findByEmail(loggedInEmail)
+        User user = userRepository.findByEmail(loggedInEmail)
                 .orElseThrow(() -> new RuntimeException("User not found!"));
 
         // 3. Gerçek kullanıcının ID'si ile beğeni işlemini yap

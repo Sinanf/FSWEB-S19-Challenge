@@ -21,4 +21,9 @@ public interface TweetRepository extends JpaRepository<Tweet, Long> {
      */
     List<Tweet> findAllByOrderByCreatedAtDesc();
 
+    List<Tweet> findAllByUserIdOrderByCreatedAtDesc(Long userId);
+
+    int countByRetweetOfId(Long tweetId);
+
+
 }

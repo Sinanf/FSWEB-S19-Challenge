@@ -1,56 +1,43 @@
 package com.workintech.twitter_api.controller;
 
-import com.workintech.twitter_api.dto.CommentRequest;
+import com.workintech.twitter_api.dto.response.CommentResponse;
 import com.workintech.twitter_api.entity.Comment;
 import com.workintech.twitter_api.service.CommentService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/comment")
+@CrossOrigin(origins = "*") // Frontend'den gelen isteklere izin ver
 public class CommentController {
 
     private final CommentService commentService;
 
-    @Autowired
     public CommentController(CommentService commentService) {
         this.commentService = commentService;
     }
 
-    // ========================================================================
-    // CRUD OPERATIONS (EKLEME, GÜNCELLEME, SİLME)
-    // ========================================================================
-
-    /**
-     * Bir tweete yeni yorum ekler.
-     * URL: POST http://localhost:8080/comment
-     */
+    // Yorum Ekleme (POST)
     @PostMapping
     public Comment save(@RequestBody CommentRequest commentRequest) {
-        return commentService.save(
-                commentRequest.getContent(),
-                commentRequest.getUserId(),
-                commentRequest.getTweetId()
-        );
+        // Not: CommentRequest diye bir DTO class'ın yoksa burayı map yapısıyla da alabilirsin
+        // ama senin mevcut yapında muhtemelen Map veya özel bir sınıf kullanıyorsun.
+        // Eğer hata alırsan aşağıda Map versiyonunu da paylaşıyorum.
+        return commentService.save(commentRequest.content(), commentRequest.userId(), commentRequest.tweetId());
     }
 
-    /**
-     * Var olan bir yorumu günceller.
-     * URL: PUT http://localhost:8080/comment/{id}
-     */
-    @PutMapping("/{id}")
-    public Comment update(@PathVariable Long id, @RequestBody CommentRequest commentRequest) {
-        // Request'ten sadece content'i alıp güncelliyoruz
-        return commentService.update(id, commentRequest.getContent());
+    // --- İŞTE EKSİK OLAN KISIM BURASI ---
+    // Frontend şu adrese istek atıyor: GET http://localhost:8080/comment/tweet/{id}
+    @GetMapping("/tweet/{tweetId}")
+    public List<CommentResponse> getCommentsByTweet(@PathVariable Long tweetId) {
+        return commentService.findCommentsByTweetId(tweetId);
     }
 
-    /**
-     * Bir yorumu siler.
-     * URL: DELETE http://localhost:8080/comment/{id}
-     */
+    // Yorum Silme
     @DeleteMapping("/{id}")
-    public String delete(@PathVariable Long id) {
+    public void delete(@PathVariable Long id) {
         commentService.delete(id);
-        return "Comment deleted successfully";
     }
 }
+

@@ -1,7 +1,7 @@
 package com.workintech.twitter_api.controller;
 
-import com.workintech.twitter_api.dto.TweetRequest;
-import com.workintech.twitter_api.dto.TweetResponse;
+import com.workintech.twitter_api.dto.request.TweetRequest;
+import com.workintech.twitter_api.dto.response.TweetResponse;
 import com.workintech.twitter_api.entity.Tweet;
 import com.workintech.twitter_api.service.TweetService;
 import jakarta.validation.Valid;
@@ -35,13 +35,11 @@ public class TweetController {
         return tweetService.findAllTweets();
     }
 
-    /**
-     * Belirli bir kullanıcının attığı tweetleri getirir.
-     * URL: GET http://localhost:8080/tweet/findByUserId/{id}
-     */
+
     @GetMapping("/findByUserId/{id}")
-    public List<Tweet> findAllByUserId(@PathVariable long id) {
-        return tweetService.findAllByUserId(id);
+    public List<TweetResponse> findAllByUserId(@PathVariable long id) {
+        // Yeni yazdığımız service metodunu çağırıyoruz
+        return tweetService.findAllTweetsByUserId(id);
     }
 
     // ========================================================================

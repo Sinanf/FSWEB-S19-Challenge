@@ -1,14 +1,14 @@
 package com.workintech.twitter_api.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-/**
- * Veritabanındaki "comment" tablosunu temsil eder.
- * Kullanıcıların tweetlere yazdığı yanıtlar burada tutulur.
- */
-@Data
+import java.time.LocalDateTime;
+
+@Getter
+@Setter
 @NoArgsConstructor
 @Entity
 @Table(name = "comment", schema = "public")
@@ -19,31 +19,22 @@ public class Comment {
     @Column(name = "id")
     private Long id;
 
-    // Yorumun metin içeriği
     @Column(name = "content")
     private String content;
 
-    // ========================================================================
-    // RELATIONSHIPS (İLİŞKİLER)
-    // ========================================================================
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
 
-    /**
-     * İlişki: Bir Kullanıcı -> Çok Yorum (ManyToOne)
-     *
-     * ÖNEMLİ NOT: Cascade tipleri arasında "REMOVE" bilerek eklenmemiştir.
-     * Çünkü bir yorum silindiğinde, o yorumu yazan KULLANICI silinmemelidir.
-     */
     @ManyToOne(cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
     @JoinColumn(name = "user_id", nullable = false)
-    private ApplicationUser user;
+    private User user;
 
-    /**
-     * İlişki: Bir Tweet -> Çok Yorum (ManyToOne)
-     *
-     * Aynı şekilde, yorum silindiğinde ana TWEET silinmemelidir.
-     * Sadece yorumun kendisi yok olmalıdır.
-     */
     @ManyToOne(cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
     @JoinColumn(name = "tweet_id", nullable = false)
     private Tweet tweet;
+
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = LocalDateTime.now();
+    }
 }

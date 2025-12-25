@@ -1,9 +1,9 @@
 package com.workintech.twitter_api.service;
 
-import com.workintech.twitter_api.entity.ApplicationUser;
+import com.workintech.twitter_api.entity.User;
 import com.workintech.twitter_api.entity.Like;
 import com.workintech.twitter_api.entity.Tweet;
-import com.workintech.twitter_api.repository.ApplicationUserRepository;
+import com.workintech.twitter_api.repository.UserRepository;
 import com.workintech.twitter_api.repository.LikeRepository;
 import com.workintech.twitter_api.repository.TweetRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,12 +19,12 @@ public class LikeService {
 
     private final LikeRepository likeRepository;
     private final TweetRepository tweetRepository;
-    private final ApplicationUserRepository userRepository;
+    private final UserRepository userRepository;
 
     @Autowired
     public LikeService(LikeRepository likeRepository,
                        TweetRepository tweetRepository,
-                       ApplicationUserRepository userRepository) {
+                       UserRepository userRepository) {
         this.likeRepository = likeRepository;
         this.tweetRepository = tweetRepository;
         this.userRepository = userRepository;
@@ -48,7 +48,7 @@ public class LikeService {
             // İlgili tweet ve kullanıcıyı doğrula
             Tweet tweet = tweetRepository.findById(tweetId)
                     .orElseThrow(() -> new RuntimeException("Tweet bulunamadı"));
-            ApplicationUser user = userRepository.findById(userId)
+            User user = userRepository.findById(userId)
                     .orElseThrow(() -> new RuntimeException("User bulunamadı"));
 
             // İlişkileri kur ve kaydet

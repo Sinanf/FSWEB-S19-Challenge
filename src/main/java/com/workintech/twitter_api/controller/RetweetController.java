@@ -1,7 +1,7 @@
 package com.workintech.twitter_api.controller;
 
 import com.workintech.twitter_api.entity.Tweet;
-import com.workintech.twitter_api.repository.ApplicationUserRepository;
+import com.workintech.twitter_api.repository.UserRepository;
 import com.workintech.twitter_api.service.TweetService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
@@ -12,10 +12,10 @@ import org.springframework.web.bind.annotation.*;
 public class RetweetController {
 
     private final TweetService tweetService;
-    private final ApplicationUserRepository userRepository;
+    private final UserRepository userRepository;
 
     @Autowired
-    public RetweetController(TweetService tweetService, ApplicationUserRepository userRepository) {
+    public RetweetController(TweetService tweetService, UserRepository userRepository) {
         this.tweetService = tweetService;
         this.userRepository = userRepository;
     }
