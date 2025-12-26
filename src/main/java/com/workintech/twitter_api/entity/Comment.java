@@ -1,6 +1,7 @@
 package com.workintech.twitter_api.entity;
 
 import jakarta.persistence.*;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -10,6 +11,7 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @NoArgsConstructor
+@EqualsAndHashCode(of = "id") // Sadece id alanına göre equals ve hashCode metotlarını oluşturur.
 @Entity // Bu sınıfın Veritabanında bir tablo olduğunu belirtir (ORM).
 @Table(name = "comment", schema = "public")
 public class Comment {

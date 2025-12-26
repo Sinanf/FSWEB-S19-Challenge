@@ -11,7 +11,7 @@ import java.util.List;
  */
 public interface CommentRepository extends JpaRepository<Comment, Long> {
 
-    // Derived Query: Metod isminden otomatik SQL üretir.
+
     // SELECT COUNT(*) FROM comment WHERE tweet_id = ?
     int countByTweetId(Long tweetId);
 

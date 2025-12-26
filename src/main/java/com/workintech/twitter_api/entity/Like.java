@@ -1,12 +1,14 @@
 package com.workintech.twitter_api.entity;
 
 import jakarta.persistence.*;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter
 @Setter
+@EqualsAndHashCode(of = "id")
 @NoArgsConstructor
 @Entity
 @Table(name = "likes", schema = "public") // 'Like' SQL'de rezerve bir kelime olduğu için tablo adını 'likes' yaptık.
